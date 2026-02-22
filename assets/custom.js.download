@@ -1,0 +1,73 @@
+$(document).ready(function(){
+
+	$("#url").keyup(function(e){
+		var code = (e.keyCode || e.which);
+		if(code == 37 || code == 38 || code == 39 || code == 40) {
+			var index = $('.active').index();
+			if(!index){	index = 0; }
+			$('#suggestions li').removeClass('active');
+			switch (code){
+			    case 38:   //up arrow key
+			    	var new_index = index - 1;
+			    	$('#suggestions li').eq(new_index).addClass('active');
+			    	var new_query = $('#suggestions li.active').text();
+			    	$('#url').val(new_query);
+
+			    	break;
+			    case 40:   	//bottom arrow key
+			    	var new_index = index + 1;
+			    	$('#suggestions li').eq(new_index).addClass('active');
+			    	var new_query = $('#suggestions li.active').text();
+			    	$('#url').val(new_query);
+			    	break;
+
+			    }
+			} else if(code == 13){
+				$("#suggestion_box").hide();
+			}else{
+				var search_txt = '';
+				jQuery.ajax({
+					type: "POST",
+					url: "https://suggestqueries.google.com/complete/search?hl=en&ds=yt&client=youtube&hjson=t&cp=1",
+					dataType: 'jsonp',
+					data: $.extend({q: $(this).val(),}, {}),
+					success: function(data) {
+						$("#suggestion_box").html('').show();
+						$("#url").css("background","#FFF");
+
+						search_txt = "<ul class='suggestions' id='suggestions'>";
+
+						obj = data[1];
+						jQuery.each(obj, function(key, value) {
+							search_txt = search_txt + "<li class='search_result'>"+value[0]+"</li>";
+						});
+						search_txt = search_txt + "</ul";
+						$("#suggestion_box").append(search_txt);
+
+					}
+				});
+			}
+
+		});
+	jQuery(document).on('click', 'ul#suggestions li', function(){
+		var valattr = $(this).text();
+
+		$('#url').val(valattr);
+		$("#suggestion_box").hide();
+		$('#submit_btn').click();
+
+	});	
+
+	$(document).mouseup(function (e) {
+		if ($(e.target).closest("#suggestion_box").length === 0) {
+			$("#suggestion_box").hide();
+		}
+	});
+
+	$(document).on('mouseenter','.search_result', function (event) {
+		$('#suggestions li').removeClass('active');
+		$(this).addClass('active');
+		var new_query = $('#suggestions li.active').text();
+		$('#url').val(new_query);
+	});
+});
